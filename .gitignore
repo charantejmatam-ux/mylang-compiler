@@ -1,0 +1,9 @@
+# Object files
+*.o
+
+# Executable files
+out
+a.out
+
+# Build output folder
+output/
