@@ -7,20 +7,22 @@
 typedef enum {
     // End of file
     TOKEN_EOF,
-    
+
     // Identifiers and literals
     TOKEN_IDENTIFIER,
     TOKEN_NUMBER,
-     TOKEN_CHAR,        // Add this
-    TOKEN_STRING,      // Add this
-    // Keywords - YOUR LANGUAGE KEYWORDS
-    TOKEN_FUNC,        // instead of TOKEN_INT
-    TOKEN_VAR,         // new keyword
+    TOKEN_CHAR,
+    TOKEN_STRING,
+
+    // Keywords
+    TOKEN_FUNC,
+    TOKEN_VAR,
+    TOKEN_STRING_TYPE,   /* 'string' keyword for typed var decl */
     TOKEN_RETURN,
     TOKEN_IF,
     TOKEN_ELSE,
     TOKEN_WHILE,
-    
+
     // Operators
     TOKEN_PLUS,
     TOKEN_MINUS,
@@ -35,7 +37,7 @@ typedef enum {
     TOKEN_GREATER_EQUAL,
     TOKEN_AND,
     TOKEN_OR,
-    
+
     // Delimiters
     TOKEN_SEMICOLON,
     TOKEN_COMMA,
@@ -43,11 +45,12 @@ typedef enum {
     TOKEN_RPAREN,
     TOKEN_LBRACE,
     TOKEN_RBRACE,
-    
+
     // Special
     TOKEN_UNKNOWN,
     TOKEN_ERROR
 } TokenType;
+
 // Token structure
 typedef struct {
     TokenType type;
@@ -71,7 +74,5 @@ void free_lexer(Lexer* lexer);
 Token* get_next_token(Lexer* lexer);
 void free_token(Token* token);
 const char* token_type_to_string(TokenType type);
-
-
 
 #endif
