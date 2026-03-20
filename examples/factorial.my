@@ -1,0 +1,10 @@
+func main() {
+    var z = 62
+    var result = 0
+    if z > 1000 {
+        result = 1
+    } else {
+        result = 0
+    }
+    return result
+}

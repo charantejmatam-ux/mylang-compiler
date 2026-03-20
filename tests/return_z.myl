@@ -1,0 +1,11 @@
+func main() {
+    var x = 42
+    var y = 10
+    var z = x + y * 2
+    
+    if z > 60 {
+        return 1
+    } else {
+        return 0
+    }
+}
