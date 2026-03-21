@@ -1,9 +1,9 @@
 #include "ast.h"
 
 ASTNode* create_program_node(void) {
-    ASTNode* node = safe_calloc(1, sizeof(ASTNode));
-    node->type = AST_PROGRAM;
-    return node;
+    ASTNode* n = safe_calloc(1, sizeof(ASTNode));
+    n->type = AST_PROGRAM;
+    return n;
 }
 
 void add_function(ASTNode* program, ASTNode* function) {
@@ -15,28 +15,24 @@ void add_function(ASTNode* program, ASTNode* function) {
     program->data.program.functions[program->data.program.function_count - 1] = function;
 }
 
-/* params and param_count are new — callers that pass 0/NULL still work */
 ASTNode* create_function_node(char* name, char** params, int param_count, ASTNode* body) {
-    ASTNode* node = safe_calloc(1, sizeof(ASTNode));
-    node->type = AST_FUNCTION;
-    node->data.function.name        = str_dup(name);
-    node->data.function.body        = body;
-    node->data.function.param_count = param_count;
-
+    ASTNode* n = safe_calloc(1, sizeof(ASTNode));
+    n->type = AST_FUNCTION;
+    n->data.function.name        = str_dup(name);
+    n->data.function.body        = body;
+    n->data.function.param_count = param_count;
     if (param_count > 0 && params) {
-        node->data.function.params = safe_malloc(param_count * sizeof(char*));
+        n->data.function.params = safe_malloc(param_count * sizeof(char*));
         for (int i = 0; i < param_count; i++)
-            node->data.function.params[i] = str_dup(params[i]);
-    } else {
-        node->data.function.params = NULL;
+            n->data.function.params[i] = str_dup(params[i]);
     }
-    return node;
+    return n;
 }
 
 ASTNode* create_block_node(void) {
-    ASTNode* node = safe_calloc(1, sizeof(ASTNode));
-    node->type = AST_BLOCK;
-    return node;
+    ASTNode* n = safe_calloc(1, sizeof(ASTNode));
+    n->type = AST_BLOCK;
+    return n;
 }
 
 void add_statement(ASTNode* block, ASTNode* stmt) {
@@ -49,103 +45,131 @@ void add_statement(ASTNode* block, ASTNode* stmt) {
 }
 
 ASTNode* create_var_decl_node(char* name, ASTNode* init, int line, int col) {
-    ASTNode* node = safe_calloc(1, sizeof(ASTNode));
-    node->type = AST_VAR_DECL;
-    node->line = line; node->column = col;
-    node->data.var_decl.name        = str_dup(name);
-    node->data.var_decl.initializer = init;
-    return node;
+    ASTNode* n = safe_calloc(1, sizeof(ASTNode));
+    n->type = AST_VAR_DECL; n->line = line; n->column = col;
+    n->data.var_decl.name        = str_dup(name);
+    n->data.var_decl.initializer = init;
+    return n;
 }
 
 ASTNode* create_char_node(char value, int line, int col) {
-    ASTNode* node = safe_calloc(1, sizeof(ASTNode));
-    node->type = AST_CHAR;
-    node->line = line; node->column = col;
-    node->data.char_value = value;
-    return node;
+    ASTNode* n = safe_calloc(1, sizeof(ASTNode));
+    n->type = AST_CHAR; n->line = line; n->column = col;
+    n->data.char_value = value;
+    return n;
 }
 
 ASTNode* create_string_node(char* value, int line, int col) {
-    ASTNode* node = safe_calloc(1, sizeof(ASTNode));
-    node->type = AST_STRING;
-    node->line = line; node->column = col;
-    node->data.string_value = str_dup(value);
-    return node;
+    ASTNode* n = safe_calloc(1, sizeof(ASTNode));
+    n->type = AST_STRING; n->line = line; n->column = col;
+    n->data.string_value = str_dup(value);
+    return n;
 }
 
 ASTNode* create_assignment_node(char* name, ASTNode* value, int line, int col) {
-    ASTNode* node = safe_calloc(1, sizeof(ASTNode));
-    node->type = AST_ASSIGNMENT;
-    node->line = line; node->column = col;
-    node->data.assignment.name  = str_dup(name);
-    node->data.assignment.value = value;
-    return node;
+    ASTNode* n = safe_calloc(1, sizeof(ASTNode));
+    n->type = AST_ASSIGNMENT; n->line = line; n->column = col;
+    n->data.assignment.name  = str_dup(name);
+    n->data.assignment.value = value;
+    return n;
 }
 
 ASTNode* create_return_node(ASTNode* value, int line, int col) {
-    ASTNode* node = safe_calloc(1, sizeof(ASTNode));
-    node->type = AST_RETURN;
-    node->line = line; node->column = col;
-    node->data.return_value = value;
-    return node;
+    ASTNode* n = safe_calloc(1, sizeof(ASTNode));
+    n->type = AST_RETURN; n->line = line; n->column = col;
+    n->data.return_value = value;
+    return n;
 }
 
 ASTNode* create_if_node(ASTNode* cond, ASTNode* then_branch,
                         ASTNode* else_branch, int line, int col) {
-    ASTNode* node = safe_calloc(1, sizeof(ASTNode));
-    node->type = AST_IF;
-    node->line = line; node->column = col;
-    node->data.if_stmt.condition   = cond;
-    node->data.if_stmt.then_branch = then_branch;
-    node->data.if_stmt.else_branch = else_branch;
-    return node;
+    ASTNode* n = safe_calloc(1, sizeof(ASTNode));
+    n->type = AST_IF; n->line = line; n->column = col;
+    n->data.if_stmt.condition   = cond;
+    n->data.if_stmt.then_branch = then_branch;
+    n->data.if_stmt.else_branch = else_branch;
+    return n;
 }
 
 ASTNode* create_while_node(ASTNode* cond, ASTNode* body, int line, int col) {
-    ASTNode* node = safe_calloc(1, sizeof(ASTNode));
-    node->type = AST_WHILE;
-    node->line = line; node->column = col;
-    node->data.while_stmt.condition = cond;
-    node->data.while_stmt.body      = body;
-    return node;
+    ASTNode* n = safe_calloc(1, sizeof(ASTNode));
+    n->type = AST_WHILE; n->line = line; n->column = col;
+    n->data.while_stmt.condition = cond;
+    n->data.while_stmt.body      = body;
+    return n;
+}
+
+ASTNode* create_for_node(ASTNode* init, ASTNode* cond,
+                         ASTNode* update, ASTNode* body, int line, int col) {
+    ASTNode* n = safe_calloc(1, sizeof(ASTNode));
+    n->type = AST_FOR; n->line = line; n->column = col;
+    n->data.for_stmt.init      = init;
+    n->data.for_stmt.condition = cond;
+    n->data.for_stmt.update    = update;
+    n->data.for_stmt.body      = body;
+    return n;
 }
 
 ASTNode* create_binary_op_node(TokenType op, ASTNode* left, ASTNode* right,
                                int line, int col) {
-    ASTNode* node = safe_calloc(1, sizeof(ASTNode));
-    node->type = AST_BINARY_OP;
-    node->line = line; node->column = col;
-    node->data.binary.op    = op;
-    node->data.binary.left  = left;
-    node->data.binary.right = right;
-    return node;
+    ASTNode* n = safe_calloc(1, sizeof(ASTNode));
+    n->type = AST_BINARY_OP; n->line = line; n->column = col;
+    n->data.binary.op    = op;
+    n->data.binary.left  = left;
+    n->data.binary.right = right;
+    return n;
 }
 
 ASTNode* create_integer_node(int value, int line, int col) {
-    ASTNode* node = safe_calloc(1, sizeof(ASTNode));
-    node->type = AST_INTEGER;
-    node->line = line; node->column = col;
-    node->data.int_value = value;
-    return node;
+    ASTNode* n = safe_calloc(1, sizeof(ASTNode));
+    n->type = AST_INTEGER; n->line = line; n->column = col;
+    n->data.int_value = value;
+    return n;
 }
 
 ASTNode* create_identifier_node(char* name, int line, int col) {
-    ASTNode* node = safe_calloc(1, sizeof(ASTNode));
-    node->type = AST_IDENTIFIER;
-    node->line = line; node->column = col;
-    node->data.identifier = str_dup(name);
-    return node;
+    ASTNode* n = safe_calloc(1, sizeof(ASTNode));
+    n->type = AST_IDENTIFIER; n->line = line; n->column = col;
+    n->data.identifier = str_dup(name);
+    return n;
 }
 
 ASTNode* create_function_call_node(char* name, ASTNode** args, int arg_count,
                                    int line, int col) {
-    ASTNode* node = safe_calloc(1, sizeof(ASTNode));
-    node->type = AST_FUNCTION_CALL;
-    node->line = line; node->column = col;
-    node->data.func_call.name      = str_dup(name);
-    node->data.func_call.arguments = args;
-    node->data.func_call.arg_count = arg_count;
-    return node;
+    ASTNode* n = safe_calloc(1, sizeof(ASTNode));
+    n->type = AST_FUNCTION_CALL; n->line = line; n->column = col;
+    n->data.func_call.name      = str_dup(name);
+    n->data.func_call.arguments = args;
+    n->data.func_call.arg_count = arg_count;
+    return n;
+}
+
+/* ── list creators ── */
+
+ASTNode* create_list_literal_node(ASTNode** elems, int count, int line, int col) {
+    ASTNode* n = safe_calloc(1, sizeof(ASTNode));
+    n->type = AST_LIST_LITERAL; n->line = line; n->column = col;
+    n->data.list_literal.elements = elems;
+    n->data.list_literal.count    = count;
+    return n;
+}
+
+ASTNode* create_index_node(ASTNode* object, ASTNode* index, int line, int col) {
+    ASTNode* n = safe_calloc(1, sizeof(ASTNode));
+    n->type = AST_INDEX; n->line = line; n->column = col;
+    n->data.index_expr.object = object;
+    n->data.index_expr.index  = index;
+    return n;
+}
+
+ASTNode* create_list_assign_node(char* name, ASTNode* index,
+                                 ASTNode* value, int line, int col) {
+    ASTNode* n = safe_calloc(1, sizeof(ASTNode));
+    n->type = AST_LIST_ASSIGN; n->line = line; n->column = col;
+    n->data.list_assign.name  = str_dup(name);
+    n->data.list_assign.index = index;
+    n->data.list_assign.value = value;
+    return n;
 }
 
 /* ── free ── */
@@ -178,9 +202,7 @@ static void free_ast_node(ASTNode* node) {
             safe_free((void**)&node->data.assignment.name);
             free_ast(node->data.assignment.value);
             break;
-        case AST_RETURN:
-            free_ast(node->data.return_value);
-            break;
+        case AST_RETURN:   free_ast(node->data.return_value); break;
         case AST_IF:
             free_ast(node->data.if_stmt.condition);
             free_ast(node->data.if_stmt.then_branch);
@@ -190,26 +212,39 @@ static void free_ast_node(ASTNode* node) {
             free_ast(node->data.while_stmt.condition);
             free_ast(node->data.while_stmt.body);
             break;
+        case AST_FOR:
+            free_ast(node->data.for_stmt.init);
+            free_ast(node->data.for_stmt.condition);
+            free_ast(node->data.for_stmt.update);
+            free_ast(node->data.for_stmt.body);
+            break;
         case AST_BINARY_OP:
             free_ast(node->data.binary.left);
             free_ast(node->data.binary.right);
             break;
-        case AST_IDENTIFIER:
-            safe_free((void**)&node->data.identifier);
-            break;
+        case AST_IDENTIFIER:   safe_free((void**)&node->data.identifier);    break;
+        case AST_STRING:       safe_free((void**)&node->data.string_value);  break;
         case AST_FUNCTION_CALL:
             safe_free((void**)&node->data.func_call.name);
             for (int i = 0; i < node->data.func_call.arg_count; i++)
                 free_ast(node->data.func_call.arguments[i]);
             safe_free((void**)&node->data.func_call.arguments);
             break;
-        case AST_STRING:
-            safe_free((void**)&node->data.string_value);
+        case AST_LIST_LITERAL:
+            for (int i = 0; i < node->data.list_literal.count; i++)
+                free_ast(node->data.list_literal.elements[i]);
+            safe_free((void**)&node->data.list_literal.elements);
             break;
-        case AST_CHAR:
-        case AST_INTEGER:
-        default:
+        case AST_INDEX:
+            free_ast(node->data.index_expr.object);
+            free_ast(node->data.index_expr.index);
             break;
+        case AST_LIST_ASSIGN:
+            safe_free((void**)&node->data.list_assign.name);
+            free_ast(node->data.list_assign.index);
+            free_ast(node->data.list_assign.value);
+            break;
+        default: break;
     }
 }
 
@@ -228,79 +263,88 @@ static void print_indent(int indent) {
 void print_ast(ASTNode* node, int indent) {
     if (!node) return;
     print_indent(indent);
-
     switch (node->type) {
         case AST_PROGRAM:
             printf("Program\n");
             for (int i = 0; i < node->data.program.function_count; i++)
-                print_ast(node->data.program.functions[i], indent + 1);
+                print_ast(node->data.program.functions[i], indent+1);
             break;
         case AST_FUNCTION:
-            printf("Function: %s (params: %d)\n",
-                   node->data.function.name,
-                   node->data.function.param_count);
+            printf("Function: %s (%d params)\n",
+                   node->data.function.name, node->data.function.param_count);
             for (int i = 0; i < node->data.function.param_count; i++) {
-                print_indent(indent + 1);
-                printf("Param: %s\n", node->data.function.params[i]);
+                print_indent(indent+1); printf("Param: %s\n", node->data.function.params[i]);
             }
-            print_ast(node->data.function.body, indent + 1);
+            print_ast(node->data.function.body, indent+1);
             break;
         case AST_BLOCK:
             printf("Block\n");
             for (int i = 0; i < node->data.block.statement_count; i++)
-                print_ast(node->data.block.statements[i], indent + 1);
+                print_ast(node->data.block.statements[i], indent+1);
             break;
         case AST_VAR_DECL:
             printf("VarDecl: %s\n", node->data.var_decl.name);
             if (node->data.var_decl.initializer)
-                print_ast(node->data.var_decl.initializer, indent + 1);
+                print_ast(node->data.var_decl.initializer, indent+1);
             break;
         case AST_ASSIGNMENT:
             printf("Assign: %s =\n", node->data.assignment.name);
-            print_ast(node->data.assignment.value, indent + 1);
+            print_ast(node->data.assignment.value, indent+1);
             break;
         case AST_RETURN:
             printf("Return\n");
-            print_ast(node->data.return_value, indent + 1);
+            print_ast(node->data.return_value, indent+1);
             break;
         case AST_IF:
             printf("If\n");
-            print_ast(node->data.if_stmt.condition, indent + 1);
-            print_ast(node->data.if_stmt.then_branch, indent + 1);
+            print_ast(node->data.if_stmt.condition,  indent+1);
+            print_ast(node->data.if_stmt.then_branch, indent+1);
             if (node->data.if_stmt.else_branch) {
                 print_indent(indent); printf("Else\n");
-                print_ast(node->data.if_stmt.else_branch, indent + 1);
+                print_ast(node->data.if_stmt.else_branch, indent+1);
             }
             break;
         case AST_WHILE:
             printf("While\n");
-            print_ast(node->data.while_stmt.condition, indent + 1);
-            print_ast(node->data.while_stmt.body, indent + 1);
+            print_ast(node->data.while_stmt.condition, indent+1);
+            print_ast(node->data.while_stmt.body,      indent+1);
+            break;
+        case AST_FOR:
+            printf("For\n");
+            print_ast(node->data.for_stmt.init,      indent+1);
+            print_ast(node->data.for_stmt.condition, indent+1);
+            print_ast(node->data.for_stmt.update,    indent+1);
+            print_ast(node->data.for_stmt.body,      indent+1);
             break;
         case AST_BINARY_OP:
             printf("BinaryOp: %s\n", token_type_to_string(node->data.binary.op));
-            print_ast(node->data.binary.left,  indent + 1);
-            print_ast(node->data.binary.right, indent + 1);
+            print_ast(node->data.binary.left,  indent+1);
+            print_ast(node->data.binary.right, indent+1);
             break;
-        case AST_INTEGER:
-            printf("Integer: %d\n", node->data.int_value);
-            break;
-        case AST_IDENTIFIER:
-            printf("Identifier: %s\n", node->data.identifier);
-            break;
-        case AST_CHAR:
-            printf("Char: '%c'\n", node->data.char_value);
-            break;
-        case AST_STRING:
-            printf("String: \"%s\"\n", node->data.string_value);
-            break;
+        case AST_INTEGER:    printf("Integer: %d\n",    node->data.int_value);    break;
+        case AST_IDENTIFIER: printf("Ident: %s\n",      node->data.identifier);   break;
+        case AST_CHAR:       printf("Char: '%c'\n",     node->data.char_value);   break;
+        case AST_STRING:     printf("String: \"%s\"\n", node->data.string_value); break;
         case AST_FUNCTION_CALL:
             printf("Call: %s\n", node->data.func_call.name);
             for (int i = 0; i < node->data.func_call.arg_count; i++)
-                print_ast(node->data.func_call.arguments[i], indent + 1);
+                print_ast(node->data.func_call.arguments[i], indent+1);
             break;
-        default:
-            printf("(unknown node %d)\n", node->type);
+        case AST_LIST_LITERAL:
+            printf("ListLiteral (%d elements)\n", node->data.list_literal.count);
+            for (int i = 0; i < node->data.list_literal.count; i++)
+                print_ast(node->data.list_literal.elements[i], indent+1);
             break;
+        case AST_INDEX:
+            printf("Index\n");
+            print_ast(node->data.index_expr.object, indent+1);
+            print_ast(node->data.index_expr.index,  indent+1);
+            break;
+        case AST_LIST_ASSIGN:
+            printf("ListAssign: %s[]\n", node->data.list_assign.name);
+            print_ast(node->data.list_assign.index, indent+1);
+            print_ast(node->data.list_assign.value, indent+1);
+            break;
+        default: printf("(unknown %d)\n", node->type); break;
     }
 }
