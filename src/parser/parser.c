@@ -30,6 +30,7 @@ static ASTNode* parse_equality(Parser* parser);
 static ASTNode* parse_comparison(Parser* parser);
 static ASTNode* parse_term(Parser* parser);
 static ASTNode* parse_factor(Parser* parser);
+static ASTNode* parse_unary(Parser* parser);
 static ASTNode* parse_primary(Parser* parser);
 
 Parser* init_parser(Lexer* lexer) {
@@ -54,7 +55,6 @@ int get_parser_error_count(Parser* parser) { return parser->error_count; }
 /* ─────────────────────────────────────────
    PROGRAM
 ───────────────────────────────────────── */
-
 ASTNode* parse_program(Parser* parser) {
     printf("DEBUG: Starting parse_program\n");
     ASTNode* program = create_program_node();
@@ -62,19 +62,13 @@ ASTNode* parse_program(Parser* parser) {
     while (parser->current_token->type != TOKEN_EOF) {
         if (parser->current_token->type == TOKEN_FUNC) {
             advance(parser);
-
             if (parser->current_token->type != TOKEN_IDENTIFIER) {
-                error_at(parser->current_token->line,
-                         parser->current_token->column,
+                error_at(parser->current_token->line, parser->current_token->column,
                          "Expected function name after 'func'");
-                parser->error_count++;
-                advance(parser);
-                continue;
+                parser->error_count++; advance(parser); continue;
             }
-
             char* func_name = str_dup(parser->current_token->lexeme);
             advance(parser);
-
             expect(parser, TOKEN_LPAREN, "Expected '(' after function name");
 
             char* params[64]; int param_count = 0;
@@ -85,10 +79,8 @@ ASTNode* parse_program(Parser* parser) {
                     advance(parser);
                 } else {
                     error_at(parser->current_token->line,
-                             parser->current_token->column,
-                             "Expected parameter name");
-                    parser->error_count++;
-                    advance(parser);
+                             parser->current_token->column, "Expected parameter name");
+                    parser->error_count++; advance(parser);
                 }
                 if (parser->current_token->type == TOKEN_COMMA) advance(parser);
             }
@@ -107,13 +99,11 @@ ASTNode* parse_program(Parser* parser) {
             add_function(program, function);
             for (int i = 0; i < param_count; i++) free(params[i]);
             safe_free((void**)&func_name);
-
         } else {
             error_at(parser->current_token->line, parser->current_token->column,
                      "Unexpected token at top level: %s",
                      token_type_to_string(parser->current_token->type));
-            parser->error_count++;
-            advance(parser);
+            parser->error_count++; advance(parser);
         }
     }
     return program;
@@ -122,7 +112,6 @@ ASTNode* parse_program(Parser* parser) {
 /* ─────────────────────────────────────────
    STATEMENT
 ───────────────────────────────────────── */
-
 static ASTNode* parse_statement(Parser* parser) {
     ASTNode* stmt = NULL;
     int line = parser->current_token->line;
@@ -130,7 +119,7 @@ static ASTNode* parse_statement(Parser* parser) {
 
     switch (parser->current_token->type) {
 
-        /* ── var x = expr ── */
+        /* var x = expr */
         case TOKEN_VAR: {
             advance(parser);
             if (parser->current_token->type == TOKEN_IDENTIFIER) {
@@ -153,7 +142,31 @@ static ASTNode* parse_statement(Parser* parser) {
             break;
         }
 
-        /* ── string v = 'value' ── */
+        /* bool flag = yes/no */
+        case TOKEN_BOOL: {
+            advance(parser);  /* consume 'bool' */
+            if (parser->current_token->type == TOKEN_IDENTIFIER) {
+                char* name = str_dup(parser->current_token->lexeme);
+                int vl = parser->current_token->line;
+                int vc = parser->current_token->column;
+                advance(parser);
+                ASTNode* init = NULL;
+                if (parser->current_token->type == TOKEN_ASSIGN) {
+                    advance(parser);
+                    init = parse_expression(parser);
+                }
+                if (parser->current_token->type == TOKEN_SEMICOLON) advance(parser);
+                stmt = create_var_decl_node(name, init, vl, vc);
+                safe_free((void**)&name);
+            } else {
+                error_at(parser->current_token->line, parser->current_token->column,
+                         "Expected identifier after 'bool'");
+                parser->error_count++;
+            }
+            break;
+        }
+
+        /* string v = 'value' */
         case TOKEN_STRING_TYPE: {
             advance(parser);
             if (parser->current_token->type == TOKEN_IDENTIFIER) {
@@ -167,9 +180,7 @@ static ASTNode* parse_statement(Parser* parser) {
                     if (parser->current_token->type == TOKEN_STRING) {
                         init = create_string_node(parser->current_token->lexeme, vl, vc);
                         advance(parser);
-                    } else {
-                        init = parse_expression(parser);
-                    }
+                    } else init = parse_expression(parser);
                 }
                 if (parser->current_token->type == TOKEN_SEMICOLON) advance(parser);
                 stmt = create_var_decl_node(name, init, vl, vc);
@@ -178,53 +189,40 @@ static ASTNode* parse_statement(Parser* parser) {
             break;
         }
 
-        /* ── list nums = [1, 2, 3] ── */
+        /* list nums = [1, 2, 3] */
         case TOKEN_LIST: {
-            advance(parser);  /* consume 'list' */
-
+            advance(parser);
             if (parser->current_token->type != TOKEN_IDENTIFIER) {
                 error_at(parser->current_token->line, parser->current_token->column,
                          "Expected variable name after 'list'");
-                parser->error_count++;
-                break;
+                parser->error_count++; break;
             }
-
             char* name = str_dup(parser->current_token->lexeme);
             int vl = parser->current_token->line;
             int vc = parser->current_token->column;
-            advance(parser);  /* consume variable name */
-
+            advance(parser);
             ASTNode* init = NULL;
-
             if (parser->current_token->type == TOKEN_ASSIGN) {
-                advance(parser);  /* consume = */
-
-                expect(parser, TOKEN_LBRACKET,
-                       "Expected '[' after '=' in list declaration");
-
-                ASTNode** elems = NULL;
-                int count = 0;
-
+                advance(parser);
+                expect(parser, TOKEN_LBRACKET, "Expected '[' after '='");
+                ASTNode** elems = NULL; int count = 0;
                 while (parser->current_token->type != TOKEN_RBRACKET &&
                        parser->current_token->type != TOKEN_EOF) {
                     count++;
                     elems = safe_realloc(elems, count * sizeof(ASTNode*));
-                    elems[count - 1] = parse_expression(parser);
-                    if (parser->current_token->type == TOKEN_COMMA)
-                        advance(parser);
+                    elems[count-1] = parse_expression(parser);
+                    if (parser->current_token->type == TOKEN_COMMA) advance(parser);
                 }
-
-                expect(parser, TOKEN_RBRACKET, "Expected ']' to close list");
+                expect(parser, TOKEN_RBRACKET, "Expected ']'");
                 init = create_list_literal_node(elems, count, vl, vc);
             }
-
             if (parser->current_token->type == TOKEN_SEMICOLON) advance(parser);
             stmt = create_var_decl_node(name, init, vl, vc);
             safe_free((void**)&name);
             break;
         }
 
-        /* ── return expr ── */
+        /* return expr */
         case TOKEN_RETURN: {
             advance(parser);
             ASTNode* val = parse_expression(parser);
@@ -233,7 +231,7 @@ static ASTNode* parse_statement(Parser* parser) {
             break;
         }
 
-        /* ── if condition stmt [else stmt] ── */
+        /* if condition { } [else { }] */
         case TOKEN_IF: {
             advance(parser);
             ASTNode* cond = parse_expression(parser);
@@ -246,7 +244,7 @@ static ASTNode* parse_statement(Parser* parser) {
             break;
         }
 
-        /* ── while condition { body } ── */
+        /* while condition { } */
         case TOKEN_WHILE: {
             advance(parser);
             ASTNode* cond = parse_expression(parser);
@@ -255,11 +253,10 @@ static ASTNode* parse_statement(Parser* parser) {
             break;
         }
 
-        /* ── for (init; condition; update) { body } ── */
+        /* for (init; cond; update) { } */
         case TOKEN_FOR: {
             advance(parser);
             expect(parser, TOKEN_LPAREN, "Expected '(' after 'for'");
-
             ASTNode* init = NULL;
             if (parser->current_token->type == TOKEN_VAR) {
                 advance(parser);
@@ -280,29 +277,25 @@ static ASTNode* parse_statement(Parser* parser) {
                 init = parse_assignment(parser);
             }
             expect(parser, TOKEN_SEMICOLON, "Expected ';' after for-init");
-
             ASTNode* cond = NULL;
             if (parser->current_token->type != TOKEN_SEMICOLON)
                 cond = parse_expression(parser);
             expect(parser, TOKEN_SEMICOLON, "Expected ';' after for-condition");
-
             ASTNode* update = NULL;
             if (parser->current_token->type != TOKEN_RPAREN) {
                 if (parser->current_token->type == TOKEN_IDENTIFIER &&
-                    parser->peek_token->type   == TOKEN_ASSIGN) {
+                    parser->peek_token->type   == TOKEN_ASSIGN)
                     update = parse_assignment(parser);
-                } else {
+                else
                     update = parse_expression(parser);
-                }
             }
             expect(parser, TOKEN_RPAREN, "Expected ')' after for-update");
-
             ASTNode* body = parse_statement(parser);
             stmt = create_for_node(init, cond, update, body, line, col);
             break;
         }
 
-        /* ── { stmts } ── */
+        /* { stmts } */
         case TOKEN_LBRACE: {
             advance(parser);
             ASTNode* block = create_block_node();
@@ -316,42 +309,24 @@ static ASTNode* parse_statement(Parser* parser) {
             break;
         }
 
-        /*
-         * ── identifier statement ──
-         *
-         * Three cases based on what follows the identifier:
-         *   x = 5          peek is TOKEN_ASSIGN     → simple assignment
-         *   nums[1] = 99   peek is TOKEN_LBRACKET   → list index assignment
-         *   output(x)      anything else             → expression
-         */
+        /* identifier: simple assign, list assign, or expression */
         case TOKEN_IDENTIFIER: {
             if (parser->peek_token->type == TOKEN_ASSIGN) {
-                /* simple variable assignment */
                 stmt = parse_assignment(parser);
-
             } else if (parser->peek_token->type == TOKEN_LBRACKET) {
-                /* list index assignment:  nums[1] = 99 */
                 char* name = str_dup(parser->current_token->lexeme);
                 int ln = parser->current_token->line;
                 int cn = parser->current_token->column;
-                advance(parser);   /* consume list name */
-
-                advance(parser);   /* consume [ */
+                advance(parser); advance(parser);  /* name + [ */
                 ASTNode* idx = parse_expression(parser);
-                expect(parser, TOKEN_RBRACKET, "Expected ']' after index");
-
-                expect(parser, TOKEN_ASSIGN,
-                       "Expected '=' after list index in assignment");
-
+                expect(parser, TOKEN_RBRACKET, "Expected ']'");
+                expect(parser, TOKEN_ASSIGN, "Expected '=' after index");
                 ASTNode* val = parse_expression(parser);
                 stmt = create_list_assign_node(name, idx, val, ln, cn);
                 safe_free((void**)&name);
-
             } else {
-                /* expression statement: function call, etc. */
                 stmt = parse_expression(parser);
             }
-
             if (parser->current_token->type == TOKEN_SEMICOLON) advance(parser);
             break;
         }
@@ -362,17 +337,12 @@ static ASTNode* parse_statement(Parser* parser) {
             error_at(parser->current_token->line, parser->current_token->column,
                      "Unexpected token in statement: %s",
                      token_type_to_string(parser->current_token->type));
-            parser->error_count++;
-            advance(parser);
-            break;
+            parser->error_count++; advance(parser); break;
     }
     return stmt;
 }
 
-/* ─────────────────────────────────────────
-   ASSIGNMENT
-───────────────────────────────────────── */
-
+/* ── assignment ── */
 static ASTNode* parse_assignment(Parser* parser) {
     int line = parser->current_token->line;
     int col  = parser->current_token->column;
@@ -388,10 +358,7 @@ static ASTNode* parse_assignment(Parser* parser) {
     return NULL;
 }
 
-/* ─────────────────────────────────────────
-   EXPRESSIONS
-───────────────────────────────────────── */
-
+/* ── expression precedence chain ── */
 static ASTNode* parse_expression(Parser* parser) { return parse_logical_or(parser); }
 
 static ASTNode* parse_logical_or(Parser* parser) {
@@ -455,21 +422,38 @@ static ASTNode* parse_term(Parser* parser) {
 }
 
 static ASTNode* parse_factor(Parser* parser) {
-    ASTNode* e = parse_primary(parser);
+    ASTNode* e = parse_unary(parser);
     while (parser->current_token->type == TOKEN_STAR ||
            parser->current_token->type == TOKEN_SLASH) {
         TokenType op = parser->current_token->type;
         int l = parser->current_token->line, c = parser->current_token->column;
         advance(parser);
-        e = create_binary_op_node(op, e, parse_primary(parser), l, c);
+        e = create_binary_op_node(op, e, parse_unary(parser), l, c);
     }
     return e;
 }
 
-/* ─────────────────────────────────────────
-   PRIMARY
-───────────────────────────────────────── */
+/*
+ * parse_unary — handles  !expr  and  -expr
+ * Sits between factor and primary so it binds tightly.
+ */
+static ASTNode* parse_unary(Parser* parser) {
+    if (parser->current_token->type == TOKEN_NOT) {
+        int l = parser->current_token->line, c = parser->current_token->column;
+        advance(parser);  /* consume ! */
+        ASTNode* operand = parse_unary(parser);
+        return create_unary_op_node(TOKEN_NOT, operand, l, c);
+    }
+    if (parser->current_token->type == TOKEN_MINUS) {
+        int l = parser->current_token->line, c = parser->current_token->column;
+        advance(parser);  /* consume - */
+        ASTNode* operand = parse_unary(parser);
+        return create_unary_op_node(TOKEN_MINUS, operand, l, c);
+    }
+    return parse_primary(parser);
+}
 
+/* ── primary ── */
 static ASTNode* parse_primary(Parser* parser) {
     ASTNode* expr = NULL;
     int line = parser->current_token->line;
@@ -481,6 +465,20 @@ static ASTNode* parse_primary(Parser* parser) {
             int v = atoi(parser->current_token->lexeme);
             advance(parser);
             expr = create_integer_node(v, line, col);
+            break;
+        }
+
+        /* yes → bool node with value 1 */
+        case TOKEN_YES: {
+            advance(parser);
+            expr = create_bool_node(1, line, col);
+            break;
+        }
+
+        /* no → bool node with value 0 */
+        case TOKEN_NO: {
+            advance(parser);
+            expr = create_bool_node(0, line, col);
             break;
         }
 
@@ -502,15 +500,12 @@ static ASTNode* parse_primary(Parser* parser) {
         case TOKEN_IDENTIFIER: {
             char* name = str_dup(parser->current_token->lexeme);
             advance(parser);
-
             if (parser->current_token->type == TOKEN_LPAREN) {
-                /* function call: name(args...) */
                 advance(parser);
                 ASTNode** args = NULL; int argc = 0;
                 if (parser->current_token->type != TOKEN_RPAREN) {
                     args    = safe_malloc(sizeof(ASTNode*));
-                    args[0] = parse_expression(parser);
-                    argc    = 1;
+                    args[0] = parse_expression(parser); argc = 1;
                     while (parser->current_token->type == TOKEN_COMMA) {
                         advance(parser); argc++;
                         args = safe_realloc(args, argc * sizeof(ASTNode*));
@@ -519,26 +514,21 @@ static ASTNode* parse_primary(Parser* parser) {
                 }
                 expect(parser, TOKEN_RPAREN, "Expected ')' after arguments");
                 expr = create_function_call_node(name, args, argc, line, col);
-
             } else if (parser->current_token->type == TOKEN_LBRACKET) {
-                /* index read: nums[0] */
                 ASTNode* obj = create_identifier_node(name, line, col);
-                advance(parser);   /* consume [ */
+                advance(parser);
                 ASTNode* idx = parse_expression(parser);
-                expect(parser, TOKEN_RBRACKET, "Expected ']' after index");
+                expect(parser, TOKEN_RBRACKET, "Expected ']'");
                 expr = create_index_node(obj, idx, line, col);
-
             } else {
                 expr = create_identifier_node(name, line, col);
             }
-
             safe_free((void**)&name);
             break;
         }
 
-        /* bare list literal as expression:  [1, 2, 3] */
         case TOKEN_LBRACKET: {
-            advance(parser);  /* consume [ */
+            advance(parser);
             ASTNode** elems = NULL; int count = 0;
             while (parser->current_token->type != TOKEN_RBRACKET &&
                    parser->current_token->type != TOKEN_EOF) {
@@ -563,9 +553,7 @@ static ASTNode* parse_primary(Parser* parser) {
             error_at(parser->current_token->line, parser->current_token->column,
                      "Unexpected token in expression: %s",
                      token_type_to_string(parser->current_token->type));
-            parser->error_count++;
-            advance(parser);
-            break;
+            parser->error_count++; advance(parser); break;
     }
     return expr;
 }

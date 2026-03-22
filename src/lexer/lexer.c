@@ -55,15 +55,21 @@ static Token* read_identifier(Lexer* lexer) {
         buf[i++] = lexer->current_char, advance(lexer);
     buf[i] = '\0';
 
+    /* keywords */
     if (strcmp(buf, "func")   == 0) return create_token(lexer, TOKEN_FUNC,        buf);
     if (strcmp(buf, "var")    == 0) return create_token(lexer, TOKEN_VAR,         buf);
     if (strcmp(buf, "string") == 0) return create_token(lexer, TOKEN_STRING_TYPE, buf);
+    if (strcmp(buf, "bool")   == 0) return create_token(lexer, TOKEN_BOOL,        buf);
     if (strcmp(buf, "return") == 0) return create_token(lexer, TOKEN_RETURN,      buf);
     if (strcmp(buf, "if")     == 0) return create_token(lexer, TOKEN_IF,          buf);
     if (strcmp(buf, "else")   == 0) return create_token(lexer, TOKEN_ELSE,        buf);
     if (strcmp(buf, "while")  == 0) return create_token(lexer, TOKEN_WHILE,       buf);
     if (strcmp(buf, "for")    == 0) return create_token(lexer, TOKEN_FOR,         buf);
     if (strcmp(buf, "list")   == 0) return create_token(lexer, TOKEN_LIST,        buf);
+    /* boolean literals */
+    if (strcmp(buf, "yes")    == 0) return create_token(lexer, TOKEN_YES,         buf);
+    if (strcmp(buf, "no")     == 0) return create_token(lexer, TOKEN_NO,          buf);
+
     return create_token(lexer, TOKEN_IDENTIFIER, buf);
 }
 
@@ -131,7 +137,7 @@ Token* get_next_token(Lexer* lexer) {
                 return create_token(lexer, TOKEN_ASSIGN, "=");
             case '!':
                 if (lexer->current_char == '=') { advance(lexer); return create_token(lexer, TOKEN_NOT_EQUAL,     "!="); }
-                return create_token(lexer, TOKEN_UNKNOWN, "!");
+                return create_token(lexer, TOKEN_NOT, "!");
             case '<':
                 if (lexer->current_char == '=') { advance(lexer); return create_token(lexer, TOKEN_LESS_EQUAL,    "<="); }
                 return create_token(lexer, TOKEN_LESS, "<");
@@ -161,11 +167,15 @@ void free_token(Token* token) {
 const char* token_type_to_string(TokenType type) {
     static const char* names[] = {
         "EOF", "IDENTIFIER", "NUMBER", "CHAR", "STRING",
-        "FUNC", "VAR", "STRING_TYPE", "RETURN", "IF", "ELSE", "WHILE", "FOR", "LIST",
-        "PLUS", "MINUS", "STAR", "SLASH", "ASSIGN", "EQUAL", "NOT_EQUAL",
-        "LESS", "LESS_EQUAL", "GREATER", "GREATER_EQUAL", "AND", "OR",
-        "SEMICOLON", "COMMA", "LPAREN", "RPAREN", "LBRACE", "RBRACE",
-        "LBRACKET", "RBRACKET",
+        "FUNC", "VAR", "STRING_TYPE", "BOOL", "RETURN",
+        "IF", "ELSE", "WHILE", "FOR", "LIST",
+        "YES", "NO",
+        "PLUS", "MINUS", "STAR", "SLASH",
+        "ASSIGN", "EQUAL", "NOT_EQUAL",
+        "LESS", "LESS_EQUAL", "GREATER", "GREATER_EQUAL",
+        "AND", "OR", "NOT",
+        "SEMICOLON", "COMMA", "LPAREN", "RPAREN",
+        "LBRACE", "RBRACE", "LBRACKET", "RBRACKET",
         "UNKNOWN", "ERROR"
     };
     return names[type];

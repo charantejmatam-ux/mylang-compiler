@@ -1,58 +1,10 @@
+
 func main() {
-
-    output("Test 1: create and read")
-    list nums = [10, 20, 30]
-    output(nums[0])
-    output(nums[1])
-    output(nums[2])
-
-    output("Test 2: write to index")
-    nums[1] = 99
-    output(nums[1])
-
-    output("Test 3: len = 3")
-    output(len(nums))
-
-    output("Test 4: push 40 then len = 4")
-    push(nums, 40)
-    output(len(nums))
-    output(nums[3])
-
-    output("Test 5: loop over list")
-    list scores = [5, 10, 15, 20]
-    var i = 0
-    while i < len(scores) {
-        output(scores[i])
-        i = i + 1
+    if yes==no{
+        output(yes)
     }
-
-    output("Test 6: sum = 50")
-    var sum = 0
-    var j = 0
-    while j < len(scores) {
-        sum = sum + scores[j]
-        j = j + 1
+    else {
+   output(no)
     }
-    output(sum)
-
-    output("Test 7: build with push 1 to 5")
-    list built = []
-    for (var k = 1; k < 6; k = k + 1) {
-        push(built, k)
-    }
-    output(len(built))
-    output(built[0])
-    output(built[4])
-
-    output("Test 8: double each element")
-    list vals = [3, 6, 9]
-    var m = 0
-    while m < len(vals) {
-        vals[m] = vals[m] * 2
-        m = m + 1
-    }
-    output(vals[0])
-    output(vals[1])
-    output(vals[2])
-
+ 
 }

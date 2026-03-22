@@ -14,12 +14,17 @@ typedef enum {
     TOKEN_FUNC,
     TOKEN_VAR,
     TOKEN_STRING_TYPE,
+    TOKEN_BOOL,          /* 'bool' type keyword          */
     TOKEN_RETURN,
     TOKEN_IF,
     TOKEN_ELSE,
     TOKEN_WHILE,
     TOKEN_FOR,
-    TOKEN_LIST,          /* 'list' keyword          */
+    TOKEN_LIST,
+
+    /* boolean literals */
+    TOKEN_YES,           /* 'yes'  → true  → 1          */
+    TOKEN_NO,            /* 'no'   → false → 0          */
 
     /* operators */
     TOKEN_PLUS,
@@ -35,6 +40,7 @@ typedef enum {
     TOKEN_GREATER_EQUAL,
     TOKEN_AND,
     TOKEN_OR,
+    TOKEN_NOT,           /* '!' unary not operator       */
 
     /* delimiters */
     TOKEN_SEMICOLON,
@@ -43,8 +49,8 @@ typedef enum {
     TOKEN_RPAREN,
     TOKEN_LBRACE,
     TOKEN_RBRACE,
-    TOKEN_LBRACKET,      /* [                       */
-    TOKEN_RBRACKET,      /* ]                       */
+    TOKEN_LBRACKET,
+    TOKEN_RBRACKET,
 
     TOKEN_UNKNOWN,
     TOKEN_ERROR

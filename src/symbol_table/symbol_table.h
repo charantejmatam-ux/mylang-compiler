@@ -12,7 +12,8 @@ typedef enum {
     TYPE_INT,
     TYPE_CHAR,
     TYPE_STRING,
-    TYPE_LIST,       /* list variable */
+    TYPE_BOOL,       /* yes/no boolean type */
+    TYPE_LIST,
     TYPE_VOID,
     TYPE_UNKNOWN
 } DataType;

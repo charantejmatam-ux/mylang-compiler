@@ -71,7 +71,6 @@ print_str:
     pop  rbp
     ret
 
-; list_alloc(rdi = initial element count) -> rax = list pointer
 list_alloc:
     push rbp
     mov  rbp, rsp
@@ -96,8 +95,8 @@ list_alloc:
     add  rdi, 16
     mov  rax, 12
     syscall
-    mov  [rbx],     r12
-    mov  [rbx + 8], r13
+    mov  [rbx], r12
+    mov  [rbx+8], r13
     mov  rax, rbx
     pop  r13
     pop  r12
@@ -106,7 +105,6 @@ list_alloc:
     pop  rbp
     ret
 
-; list_push(rdi = list ptr, rsi = value)
 list_push:
     push rbp
     mov  rbp, rsp
@@ -117,12 +115,11 @@ list_push:
     mov  rbx, rdi
     mov  r12, rsi
     mov  r13, [rbx]
-    mov  r14, [rbx + 8]
+    mov  r14, [rbx+8]
     cmp  r13, r14
     jl   .lp_has_space
-    ; grow: double capacity via sys_brk
     imul r14, 2
-    mov  [rbx + 8], r14
+    mov  [rbx+8], r14
     xor  rdi, rdi
     mov  rax, 12
     syscall
@@ -137,7 +134,7 @@ list_push:
     mov  rcx, r13
     imul rcx, 8
     add  rcx, 16
-    mov  [rbx + rcx], r12
+    mov  [rbx+rcx], r12
     inc  r13
     mov  [rbx], r13
     pop  r14
@@ -148,7 +145,6 @@ list_push:
     pop  rbp
     ret
 
-; list_len(rdi = list ptr) -> rax = length
 list_len:
     mov  rax, [rdi]
     ret
@@ -156,351 +152,23 @@ list_len:
 _start:
     push rbp
     mov  rbp, rsp
+    mov  rax, 1
+    push rax
+    mov  rax, 0
+    mov  rbx, rax
+    pop  rax
+    cmp rax,rbx
+    sete al
+    movzx rax,al
+    cmp  rax, 0
+    je   .L0
     lea  rdi, [rel str0]
     call print_str
-    sub  rsp, 8
-    mov  rdi, 3
-    call list_alloc
-    mov  [rbp - 8], rax
-    mov  r10, [rbp - 8]
-    mov  rax, 10
-    mov  [r10 + 16], rax
-    mov  r10, [rbp - 8]
-    mov  rax, 20
-    mov  [r10 + 24], rax
-    mov  r10, [rbp - 8]
-    mov  rax, 30
-    mov  [r10 + 32], rax
-    mov  rax, [rbp - 8]
-    mov  r10, rax
-    mov  rax, 0
-    mov  rbx, rax
-    imul rbx, 8
-    add  rbx, 16
-    add  rbx, r10
-    mov  rax, [rbx]
-    mov  rdi, rax
-    call print_int
-    mov  rax, [rbp - 8]
-    mov  r10, rax
-    mov  rax, 1
-    mov  rbx, rax
-    imul rbx, 8
-    add  rbx, 16
-    add  rbx, r10
-    mov  rax, [rbx]
-    mov  rdi, rax
-    call print_int
-    mov  rax, [rbp - 8]
-    mov  r10, rax
-    mov  rax, 2
-    mov  rbx, rax
-    imul rbx, 8
-    add  rbx, 16
-    add  rbx, r10
-    mov  rax, [rbx]
-    mov  rdi, rax
-    call print_int
+    jmp  .L1
+.L0:
     lea  rdi, [rel str1]
     call print_str
-    mov  r10, [rbp - 8]
-    mov  rax, 1
-    mov  r11, rax
-    mov  rax, 99
-    imul r11, 8
-    add  r11, 16
-    add  r11, r10
-    mov  [r11], rax
-    mov  rax, [rbp - 8]
-    mov  r10, rax
-    mov  rax, 1
-    mov  rbx, rax
-    imul rbx, 8
-    add  rbx, 16
-    add  rbx, r10
-    mov  rax, [rbx]
-    mov  rdi, rax
-    call print_int
-    lea  rdi, [rel str2]
-    call print_str
-    mov  rax, [rbp - 8]
-    mov  rdi, rax
-    call list_len
-    mov  rdi, rax
-    call print_int
-    lea  rdi, [rel str3]
-    call print_str
-    mov  rax, [rbp - 8]
-    push rax
-    mov  rax, 40
-    mov  rsi, rax
-    pop  rdi
-    call list_push
-    mov  rax, [rbp - 8]
-    mov  rdi, rax
-    call list_len
-    mov  rdi, rax
-    call print_int
-    mov  rax, [rbp - 8]
-    mov  r10, rax
-    mov  rax, 3
-    mov  rbx, rax
-    imul rbx, 8
-    add  rbx, 16
-    add  rbx, r10
-    mov  rax, [rbx]
-    mov  rdi, rax
-    call print_int
-    lea  rdi, [rel str4]
-    call print_str
-    sub  rsp, 8
-    mov  rdi, 4
-    call list_alloc
-    mov  [rbp - 16], rax
-    mov  r10, [rbp - 16]
-    mov  rax, 5
-    mov  [r10 + 16], rax
-    mov  r10, [rbp - 16]
-    mov  rax, 10
-    mov  [r10 + 24], rax
-    mov  r10, [rbp - 16]
-    mov  rax, 15
-    mov  [r10 + 32], rax
-    mov  r10, [rbp - 16]
-    mov  rax, 20
-    mov  [r10 + 40], rax
-    sub  rsp, 8
-    mov  rax, 0
-    mov  [rbp - 24], rax
-.L0:
-    mov  rax, [rbp - 24]
-    push rax
-    mov  rax, [rbp - 16]
-    mov  rdi, rax
-    call list_len
-    mov  rbx, rax
-    pop  rax
-    cmp rax,rbx
-    setl al
-    movzx rax,al
-    cmp  rax, 0
-    je   .L1
-    mov  rax, [rbp - 16]
-    mov  r10, rax
-    mov  rax, [rbp - 24]
-    mov  rbx, rax
-    imul rbx, 8
-    add  rbx, 16
-    add  rbx, r10
-    mov  rax, [rbx]
-    mov  rdi, rax
-    call print_int
-    mov  rax, [rbp - 24]
-    push rax
-    mov  rax, 1
-    mov  rbx, rax
-    pop  rax
-    add  rax, rbx
-    mov  [rbp - 24], rax
-    jmp  .L0
 .L1:
-    lea  rdi, [rel str5]
-    call print_str
-    sub  rsp, 8
-    mov  rax, 0
-    mov  [rbp - 32], rax
-    sub  rsp, 8
-    mov  rax, 0
-    mov  [rbp - 40], rax
-.L2:
-    mov  rax, [rbp - 40]
-    push rax
-    mov  rax, [rbp - 16]
-    mov  rdi, rax
-    call list_len
-    mov  rbx, rax
-    pop  rax
-    cmp rax,rbx
-    setl al
-    movzx rax,al
-    cmp  rax, 0
-    je   .L3
-    mov  rax, [rbp - 32]
-    push rax
-    mov  rax, [rbp - 16]
-    mov  r10, rax
-    mov  rax, [rbp - 40]
-    mov  rbx, rax
-    imul rbx, 8
-    add  rbx, 16
-    add  rbx, r10
-    mov  rax, [rbx]
-    mov  rbx, rax
-    pop  rax
-    add  rax, rbx
-    mov  [rbp - 32], rax
-    mov  rax, [rbp - 40]
-    push rax
-    mov  rax, 1
-    mov  rbx, rax
-    pop  rax
-    add  rax, rbx
-    mov  [rbp - 40], rax
-    jmp  .L2
-.L3:
-    mov  rax, [rbp - 32]
-    mov  rdi, rax
-    call print_int
-    lea  rdi, [rel str6]
-    call print_str
-    sub  rsp, 8
-    mov  rdi, 0
-    call list_alloc
-    mov  [rbp - 48], rax
-    sub  rsp, 8
-    mov  rax, 1
-    mov  [rbp - 56], rax
-.L4:
-    mov  rax, [rbp - 56]
-    push rax
-    mov  rax, 6
-    mov  rbx, rax
-    pop  rax
-    cmp rax,rbx
-    setl al
-    movzx rax,al
-    cmp  rax, 0
-    je   .L5
-    mov  rax, [rbp - 48]
-    push rax
-    mov  rax, [rbp - 56]
-    mov  rsi, rax
-    pop  rdi
-    call list_push
-    mov  rax, [rbp - 56]
-    push rax
-    mov  rax, 1
-    mov  rbx, rax
-    pop  rax
-    add  rax, rbx
-    mov  [rbp - 56], rax
-    jmp  .L4
-.L5:
-    mov  rax, [rbp - 48]
-    mov  rdi, rax
-    call list_len
-    mov  rdi, rax
-    call print_int
-    mov  rax, [rbp - 48]
-    mov  r10, rax
-    mov  rax, 0
-    mov  rbx, rax
-    imul rbx, 8
-    add  rbx, 16
-    add  rbx, r10
-    mov  rax, [rbx]
-    mov  rdi, rax
-    call print_int
-    mov  rax, [rbp - 48]
-    mov  r10, rax
-    mov  rax, 4
-    mov  rbx, rax
-    imul rbx, 8
-    add  rbx, 16
-    add  rbx, r10
-    mov  rax, [rbx]
-    mov  rdi, rax
-    call print_int
-    lea  rdi, [rel str7]
-    call print_str
-    sub  rsp, 8
-    mov  rdi, 3
-    call list_alloc
-    mov  [rbp - 64], rax
-    mov  r10, [rbp - 64]
-    mov  rax, 3
-    mov  [r10 + 16], rax
-    mov  r10, [rbp - 64]
-    mov  rax, 6
-    mov  [r10 + 24], rax
-    mov  r10, [rbp - 64]
-    mov  rax, 9
-    mov  [r10 + 32], rax
-    sub  rsp, 8
-    mov  rax, 0
-    mov  [rbp - 72], rax
-.L6:
-    mov  rax, [rbp - 72]
-    push rax
-    mov  rax, [rbp - 64]
-    mov  rdi, rax
-    call list_len
-    mov  rbx, rax
-    pop  rax
-    cmp rax,rbx
-    setl al
-    movzx rax,al
-    cmp  rax, 0
-    je   .L7
-    mov  r10, [rbp - 64]
-    mov  rax, [rbp - 72]
-    mov  r11, rax
-    mov  rax, [rbp - 64]
-    mov  r10, rax
-    mov  rax, [rbp - 72]
-    mov  rbx, rax
-    imul rbx, 8
-    add  rbx, 16
-    add  rbx, r10
-    mov  rax, [rbx]
-    push rax
-    mov  rax, 2
-    mov  rbx, rax
-    pop  rax
-    imul rax, rbx
-    imul r11, 8
-    add  r11, 16
-    add  r11, r10
-    mov  [r11], rax
-    mov  rax, [rbp - 72]
-    push rax
-    mov  rax, 1
-    mov  rbx, rax
-    pop  rax
-    add  rax, rbx
-    mov  [rbp - 72], rax
-    jmp  .L6
-.L7:
-    mov  rax, [rbp - 64]
-    mov  r10, rax
-    mov  rax, 0
-    mov  rbx, rax
-    imul rbx, 8
-    add  rbx, 16
-    add  rbx, r10
-    mov  rax, [rbx]
-    mov  rdi, rax
-    call print_int
-    mov  rax, [rbp - 64]
-    mov  r10, rax
-    mov  rax, 1
-    mov  rbx, rax
-    imul rbx, 8
-    add  rbx, 16
-    add  rbx, r10
-    mov  rax, [rbx]
-    mov  rdi, rax
-    call print_int
-    mov  rax, [rbp - 64]
-    mov  r10, rax
-    mov  rax, 2
-    mov  rbx, rax
-    imul rbx, 8
-    add  rbx, 16
-    add  rbx, r10
-    mov  rax, [rbx]
-    mov  rdi, rax
-    call print_int
 .L_ret_main:
     mov  rsp, rbp
     pop  rbp
@@ -510,11 +178,5 @@ _start:
 
 
 section .data
-str0 db "Test 1: create and read", 0
-str1 db "Test 2: write to index", 0
-str2 db "Test 3: len = 3", 0
-str3 db "Test 4: push 40 then len = 4", 0
-str4 db "Test 5: loop over list", 0
-str5 db "Test 6: sum = 50", 0
-str6 db "Test 7: build with push 1 to 5", 0
-str7 db "Test 8: double each element", 0
+str0 db "yes", 0
+str1 db "no", 0

@@ -33,9 +33,10 @@ static void semantic_error(SemanticAnalyzer* a, ASTNode* node,
 static DataType get_expression_type(SemanticAnalyzer* a, ASTNode* expr) {
     if (!expr) return TYPE_UNKNOWN;
     switch (expr->type) {
-        case AST_INTEGER:  return TYPE_INT;
-        case AST_CHAR:     return TYPE_CHAR;
-        case AST_STRING:   return TYPE_STRING;
+        case AST_INTEGER:    return TYPE_INT;
+        case AST_BOOL:       return TYPE_BOOL;   /* yes/no literal */
+        case AST_CHAR:       return TYPE_CHAR;
+        case AST_STRING:     return TYPE_STRING;
 
         case AST_IDENTIFIER: {
             Symbol* s = lookup_symbol(a->symbols, expr->data.identifier);
@@ -50,7 +51,21 @@ static DataType get_expression_type(SemanticAnalyzer* a, ASTNode* expr) {
         case AST_BINARY_OP: {
             DataType l = get_expression_type(a, expr->data.binary.left);
             DataType r = get_expression_type(a, expr->data.binary.right);
+            /* comparisons and logical ops produce bool */
+            TokenType op = expr->data.binary.op;
+            if (op == TOKEN_EQUAL || op == TOKEN_NOT_EQUAL ||
+                op == TOKEN_LESS  || op == TOKEN_LESS_EQUAL ||
+                op == TOKEN_GREATER || op == TOKEN_GREATER_EQUAL ||
+                op == TOKEN_AND   || op == TOKEN_OR)
+                return TYPE_BOOL;
             if (l == TYPE_UNKNOWN || r == TYPE_UNKNOWN) return TYPE_UNKNOWN;
+            return TYPE_INT;
+        }
+
+        /* !expr → bool,  -expr → int */
+        case AST_UNARY_OP: {
+            get_expression_type(a, expr->data.unary.operand);
+            if (expr->data.unary.op == TOKEN_NOT) return TYPE_BOOL;
             return TYPE_INT;
         }
 
@@ -59,23 +74,17 @@ static DataType get_expression_type(SemanticAnalyzer* a, ASTNode* expr) {
                 get_expression_type(a, expr->data.func_call.arguments[i]);
             return TYPE_INT;
 
-        /* list literal → TYPE_LIST */
         case AST_LIST_LITERAL:
             for (int i = 0; i < expr->data.list_literal.count; i++)
                 get_expression_type(a, expr->data.list_literal.elements[i]);
             return TYPE_LIST;
 
-        /* index read nums[0] → TYPE_INT (elements are int) */
         case AST_INDEX: {
-            Symbol* s = NULL;
             if (expr->data.index_expr.object->type == AST_IDENTIFIER) {
-                s = lookup_symbol(a->symbols,
-                                  expr->data.index_expr.object->data.identifier);
-                if (!s) {
-                    semantic_error(a, expr, "Undefined list '%s'",
-                                   expr->data.index_expr.object->data.identifier);
-                    return TYPE_UNKNOWN;
-                }
+                Symbol* s = lookup_symbol(a->symbols,
+                                expr->data.index_expr.object->data.identifier);
+                if (!s) semantic_error(a, expr, "Undefined list '%s'",
+                            expr->data.index_expr.object->data.identifier);
             }
             get_expression_type(a, expr->data.index_expr.index);
             return TYPE_INT;
@@ -93,9 +102,11 @@ static void analyze_statement(SemanticAnalyzer* a, ASTNode* stmt) {
             DataType dtype = TYPE_INT;
             if (stmt->data.var_decl.initializer) {
                 dtype = get_expression_type(a, stmt->data.var_decl.initializer);
-                /* if init is a list literal, declare as TYPE_LIST */
                 if (stmt->data.var_decl.initializer->type == AST_LIST_LITERAL)
                     dtype = TYPE_LIST;
+                /* bool variables declared with 'bool' keyword */
+                if (stmt->data.var_decl.initializer->type == AST_BOOL)
+                    dtype = TYPE_BOOL;
             }
             if (!declare_symbol(a->symbols, stmt->data.var_decl.name,
                                 SYM_VARIABLE, dtype, stmt->line))
@@ -106,9 +117,8 @@ static void analyze_statement(SemanticAnalyzer* a, ASTNode* stmt) {
 
         case AST_FUNCTION_CALL: {
             Symbol* s = lookup_symbol(a->symbols, stmt->data.func_call.name);
-            if (!s)
-                printf("WARNING: Function '%s' not declared (allowed)\n",
-                       stmt->data.func_call.name);
+            if (!s) printf("WARNING: Function '%s' not declared (allowed)\n",
+                           stmt->data.func_call.name);
             for (int i = 0; i < stmt->data.func_call.arg_count; i++)
                 get_expression_type(a, stmt->data.func_call.arguments[i]);
             break;
@@ -116,19 +126,16 @@ static void analyze_statement(SemanticAnalyzer* a, ASTNode* stmt) {
 
         case AST_ASSIGNMENT: {
             Symbol* s = lookup_symbol(a->symbols, stmt->data.assignment.name);
-            if (!s)
-                semantic_error(a, stmt, "Variable '%s' not declared",
-                               stmt->data.assignment.name);
+            if (!s) semantic_error(a, stmt, "Variable '%s' not declared",
+                                   stmt->data.assignment.name);
             get_expression_type(a, stmt->data.assignment.value);
             break;
         }
 
-        /* list index assignment: nums[1] = 99 */
         case AST_LIST_ASSIGN: {
             Symbol* s = lookup_symbol(a->symbols, stmt->data.list_assign.name);
-            if (!s)
-                semantic_error(a, stmt, "List '%s' not declared",
-                               stmt->data.list_assign.name);
+            if (!s) semantic_error(a, stmt, "List '%s' not declared",
+                                   stmt->data.list_assign.name);
             get_expression_type(a, stmt->data.list_assign.index);
             get_expression_type(a, stmt->data.list_assign.value);
             break;
