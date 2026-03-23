@@ -8,7 +8,7 @@ print_int:
     mov  rbp, rsp
     sub  rsp, 64
     mov  rax, rdi
-    mov  r8, 0
+    mov  r8,  0
     mov  rbx, 10
 .pi_convert:
     xor  rdx, rdx
@@ -95,8 +95,8 @@ list_alloc:
     add  rdi, 16
     mov  rax, 12
     syscall
-    mov  [rbx], r12
-    mov  [rbx+8], r13
+    mov  [rbx],     r12
+    mov  [rbx + 8], r13
     mov  rax, rbx
     pop  r13
     pop  r12
@@ -115,11 +115,11 @@ list_push:
     mov  rbx, rdi
     mov  r12, rsi
     mov  r13, [rbx]
-    mov  r14, [rbx+8]
+    mov  r14, [rbx + 8]
     cmp  r13, r14
     jl   .lp_has_space
     imul r14, 2
-    mov  [rbx+8], r14
+    mov  [rbx + 8], r14
     xor  rdi, rdi
     mov  rax, 12
     syscall
@@ -134,7 +134,7 @@ list_push:
     mov  rcx, r13
     imul rcx, 8
     add  rcx, 16
-    mov  [rbx+rcx], r12
+    mov  [rbx + rcx], r12
     inc  r13
     mov  [rbx], r13
     pop  r14
@@ -152,23 +152,48 @@ list_len:
 _start:
     push rbp
     mov  rbp, rsp
+    lea  rdi, [rel str0]
+    call print_str
+    sub  rsp, 8
     mov  rax, 1
+    mov  [rbp - 8], rax
+.L0:
+    mov  rax, [rbp - 8]
     push rax
-    mov  rax, 0
+    mov  rax, 6
     mov  rbx, rax
     pop  rax
     cmp rax,rbx
-    sete al
+    setl  al
     movzx rax,al
     cmp  rax, 0
-    je   .L0
-    lea  rdi, [rel str0]
-    call print_str
+    je   .L2
+    mov  rax, [rbp - 8]
+    push rax
+    mov  rax, 3
+    mov  rbx, rax
+    pop  rax
+    cmp rax,rbx
+    sete  al
+    movzx rax,al
+    cmp  rax, 0
+    je   .L3
     jmp  .L1
-.L0:
-    lea  rdi, [rel str1]
-    call print_str
+    jmp  .L4
+.L3:
+.L4:
+    mov  rdi, [rbp - 8]
+    call print_int
 .L1:
+    mov  rax, [rbp - 8]
+    push rax
+    mov  rax, 1
+    mov  rbx, rax
+    pop  rax
+    add  rax, rbx
+    mov  [rbp - 8], rax
+    jmp  .L0
+.L2:
 .L_ret_main:
     mov  rsp, rbp
     pop  rbp
@@ -178,5 +203,4 @@ _start:
 
 
 section .data
-str0 db "yes", 0
-str1 db "no", 0
+str0 db "Test 7: skip still increments for counter", 0

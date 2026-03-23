@@ -6,5 +6,5 @@ func main() {
     } else {
         result = 0
     }
-    return result
+    output(result)
 }

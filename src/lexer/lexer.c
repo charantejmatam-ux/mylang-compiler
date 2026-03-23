@@ -55,7 +55,6 @@ static Token* read_identifier(Lexer* lexer) {
         buf[i++] = lexer->current_char, advance(lexer);
     buf[i] = '\0';
 
-    /* keywords */
     if (strcmp(buf, "func")   == 0) return create_token(lexer, TOKEN_FUNC,        buf);
     if (strcmp(buf, "var")    == 0) return create_token(lexer, TOKEN_VAR,         buf);
     if (strcmp(buf, "string") == 0) return create_token(lexer, TOKEN_STRING_TYPE, buf);
@@ -66,7 +65,8 @@ static Token* read_identifier(Lexer* lexer) {
     if (strcmp(buf, "while")  == 0) return create_token(lexer, TOKEN_WHILE,       buf);
     if (strcmp(buf, "for")    == 0) return create_token(lexer, TOKEN_FOR,         buf);
     if (strcmp(buf, "list")   == 0) return create_token(lexer, TOKEN_LIST,        buf);
-    /* boolean literals */
+    if (strcmp(buf, "break")  == 0) return create_token(lexer, TOKEN_BREAK,       buf);
+    if (strcmp(buf, "skip")   == 0) return create_token(lexer, TOKEN_SKIP,        buf);
     if (strcmp(buf, "yes")    == 0) return create_token(lexer, TOKEN_YES,         buf);
     if (strcmp(buf, "no")     == 0) return create_token(lexer, TOKEN_NO,          buf);
 
@@ -118,7 +118,9 @@ Token* get_next_token(Lexer* lexer) {
 
         if (isdigit(lexer->current_char)) return read_number(lexer);
 
-        char c = lexer->current_char; advance(lexer);
+        char c = lexer->current_char;
+        advance(lexer);
+
         switch (c) {
             case '+': return create_token(lexer, TOKEN_PLUS,      "+");
             case '-': return create_token(lexer, TOKEN_MINUS,     "-");
@@ -145,10 +147,10 @@ Token* get_next_token(Lexer* lexer) {
                 if (lexer->current_char == '=') { advance(lexer); return create_token(lexer, TOKEN_GREATER_EQUAL, ">="); }
                 return create_token(lexer, TOKEN_GREATER, ">");
             case '&':
-                if (peek(lexer) == '&') { advance(lexer); return create_token(lexer, TOKEN_AND, "&&"); }
+                if (lexer->current_char == '&') { advance(lexer); return create_token(lexer, TOKEN_AND, "&&"); }
                 return create_token(lexer, TOKEN_UNKNOWN, "&");
             case '|':
-                if (peek(lexer) == '|') { advance(lexer); return create_token(lexer, TOKEN_OR, "||"); }
+                if (lexer->current_char == '|') { advance(lexer); return create_token(lexer, TOKEN_OR,  "||"); }
                 return create_token(lexer, TOKEN_UNKNOWN, "|");
             default:
                 return create_token(lexer, TOKEN_UNKNOWN, (char[]){c, '\0'});
@@ -169,6 +171,7 @@ const char* token_type_to_string(TokenType type) {
         "EOF", "IDENTIFIER", "NUMBER", "CHAR", "STRING",
         "FUNC", "VAR", "STRING_TYPE", "BOOL", "RETURN",
         "IF", "ELSE", "WHILE", "FOR", "LIST",
+        "BREAK", "SKIP",
         "YES", "NO",
         "PLUS", "MINUS", "STAR", "SLASH",
         "ASSIGN", "EQUAL", "NOT_EQUAL",
